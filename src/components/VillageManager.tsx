@@ -114,7 +114,7 @@ export const VillageManager: React.FC<VillageManagerProps> = ({
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Total {villages.length} Desa Terdaftar &bull; Satuan Pengamanan Lingkungan SAMTUL
+            Total {villages.length} Desa Terdaftar &bull; Samsat Iring Melayanni Tulus Unggul (SAMTUL) Desa
           </p>
         </div>
 

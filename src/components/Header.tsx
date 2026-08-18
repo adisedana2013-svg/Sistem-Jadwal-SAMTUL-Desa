@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              <span>Satuan Pengamanan Lingkungan</span>
+              <span>Samsat Iring Melayanni Tulus Unggul Desa</span>
               <span className="text-slate-300">•</span>
               <span>{tglMulaiFormatted} s.d. {tglAkhirFormatted}</span>
               <span className="text-slate-300">•</span>

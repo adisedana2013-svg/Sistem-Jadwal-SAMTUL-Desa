@@ -1,6 +1,6 @@
 {
   "name": "Jadwal SAMTUL Desa",
-  "description": "Sistem Informasi & Manajemen Penjadwalan Satuan Pengamanan Lingkungan (SAMTUL) Desa dengan filter bulanan, impor/ekspor Excel (.xlsx), backup/restore JSON, dan cetak laporan resmi.",
+  "description": "Sistem Informasi & Manajemen Penjadwalan Samsat Iring Melayanni Tulus Unggul (SAMTUL) Desa dengan filter bulanan, impor/ekspor Excel (.xlsx), backup/restore JSON, dan cetak laporan resmi.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -108,7 +108,7 @@ export const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
               {BULAN_INDONESIA[monthIdx]} {year}
             </h2>
             <p className="text-xs text-slate-300">
-              Jadwal Satuan Tugas Pengamanan Lingkungan SAMTUL Desa
+              Jadwal Samsat Iring Melayanni Tulus Unggul (SAMTUL) Desa
             </p>
           </div>
         </div>
