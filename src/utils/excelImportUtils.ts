@@ -30,7 +30,7 @@ export interface ParsedVillageResult {
   errors: string[];
 }
 
-// Convert diverse date values from Excel into standard formats
+// Convert diverse date values from Excel into standard formats without timezone shifts
 export function parseExcelDate(val: any): {
   valid: boolean;
   tanggalRaw: string; // YYYY-MM-DD
@@ -41,68 +41,89 @@ export function parseExcelDate(val: any): {
     return { valid: false, tanggalRaw: '', tanggal: '', hari: '' };
   }
 
-  let d: Date | null = null;
+  let year: number | null = null;
+  let month: number | null = null; // 0-indexed (0 = Jan, 7 = Aug)
+  let day: number | null = null;
 
   if (val instanceof Date && !isNaN(val.getTime())) {
-    d = val;
+    // SheetJS XLSX with cellDates: true creates dates in UTC from Excel serials (e.g. 2026-08-18T00:00:00.000Z).
+    // Using getUTCFullYear/getUTCMonth/getUTCDate extracts the exact intended calendar date without timezone shift!
+    year = val.getUTCFullYear();
+    month = val.getUTCMonth();
+    day = val.getUTCDate();
   } else if (typeof val === 'number') {
-    // Excel date serial number (e.g. 45482)
-    // Excel epoch starts at 1899-12-30 due to the 1900 leap year bug
-    const dateParsed = new Date(Math.round((val - 25569) * 86400 * 1000));
-    if (!isNaN(dateParsed.getTime())) {
-      // Adjust timezone offset to avoid previous-day shifting
-      const userTimezoneOffset = dateParsed.getTimezoneOffset() * 60000;
-      d = new Date(dateParsed.getTime() + userTimezoneOffset);
+    // Excel date serial number (e.g. 46252)
+    try {
+      const parsedSSF = XLSX.SSF.parse_date_code(val);
+      if (parsedSSF && parsedSSF.y && parsedSSF.m && parsedSSF.d) {
+        year = parsedSSF.y;
+        month = parsedSSF.m - 1;
+        day = parsedSSF.d;
+      }
+    } catch {
+      // Fallback calculation for Excel serial number
+      const dateParsed = new Date(Math.round((val - 25569) * 86400 * 1000));
+      if (!isNaN(dateParsed.getTime())) {
+        year = dateParsed.getUTCFullYear();
+        month = dateParsed.getUTCMonth();
+        day = dateParsed.getUTCDate();
+      }
     }
   } else if (typeof val === 'string') {
     const cleanStr = val.trim();
 
-    // Check DD/MM/YYYY or DD-MM-YYYY
+    // Check DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
     const ddmmyyyy = cleanStr.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/);
     if (ddmmyyyy) {
-      const day = parseInt(ddmmyyyy[1], 10);
-      const month = parseInt(ddmmyyyy[2], 10) - 1;
-      const year = parseInt(ddmmyyyy[3], 10);
-      d = new Date(year, month, day);
+      day = parseInt(ddmmyyyy[1], 10);
+      month = parseInt(ddmmyyyy[2], 10) - 1;
+      year = parseInt(ddmmyyyy[3], 10);
     } else {
-      // Check YYYY-MM-DD or YYYY/MM/DD
+      // Check YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
       const yyyymmdd = cleanStr.match(/^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})$/);
       if (yyyymmdd) {
-        const year = parseInt(yyyymmdd[1], 10);
-        const month = parseInt(yyyymmdd[2], 10) - 1;
-        const day = parseInt(yyyymmdd[3], 10);
-        d = new Date(year, month, day);
+        year = parseInt(yyyymmdd[1], 10);
+        month = parseInt(yyyymmdd[2], 10) - 1;
+        day = parseInt(yyyymmdd[3], 10);
       } else {
-        // Try text format like '18 Agustus 2026'
-        const parts = cleanStr.split(/[\s,]+/);
+        // Try text format like '18 Agustus 2026' or '18-Agustus-2026'
+        const parts = cleanStr.split(/[\s,\-_]+/);
         if (parts.length >= 3) {
-          const day = parseInt(parts[0], 10);
+          const dPart = parseInt(parts[0], 10);
           const monthName = parts[1].toLowerCase();
-          const year = parseInt(parts[2], 10);
+          const yPart = parseInt(parts[2], 10);
           const monthIdx = BULAN_INDONESIA.findIndex(
             (b) => b.toLowerCase() === monthName || b.toLowerCase().startsWith(monthName.substring(0, 3))
           );
-          if (!isNaN(day) && monthIdx !== -1 && !isNaN(year)) {
-            d = new Date(year, monthIdx, day);
+          if (!isNaN(dPart) && monthIdx !== -1 && !isNaN(yPart)) {
+            day = dPart;
+            month = monthIdx;
+            year = yPart;
           }
         }
       }
     }
 
-    if (!d || isNaN(d.getTime())) {
+    if (year === null || month === null || day === null) {
       const fallback = new Date(cleanStr);
       if (!isNaN(fallback.getTime())) {
-        d = fallback;
+        year = fallback.getUTCFullYear();
+        month = fallback.getUTCMonth();
+        day = fallback.getUTCDate();
       }
     }
   }
 
-  if (d && !isNaN(d.getTime())) {
-    const raw = formatDateYYYYMMDD(d);
-    const formatted = formatDateDDMMYYYY(d);
-    const dayOfWeek = d.getDay();
-    const hari = HARI_INDONESIA[dayOfWeek] || '';
-    return { valid: true, tanggalRaw: raw, tanggal: formatted, hari };
+  if (year !== null && month !== null && day !== null && !isNaN(year) && !isNaN(month) && !isNaN(day)) {
+    // Construct local Date at noon (12:00:00) to ensure zero timezone border collision
+    const d = new Date(year, month, day, 12, 0, 0);
+    if (!isNaN(d.getTime())) {
+      const raw = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const formatted = `${String(day).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}`;
+      const dayOfWeek = d.getDay();
+      const hari = HARI_INDONESIA[dayOfWeek] || '';
+      return { valid: true, tanggalRaw: raw, tanggal: formatted, hari };
+    }
   }
 
   return { valid: false, tanggalRaw: '', tanggal: '', hari: '' };
