@@ -38,6 +38,7 @@ import { VillageManager } from './components/VillageManager';
 import { StatisticsView } from './components/StatisticsView';
 import { ReportPrintView } from './components/ReportPrintView';
 import { BackupRestoreModal } from './components/BackupRestoreModal';
+import { ExcelImportModal } from './components/ExcelImportModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
 export default function App() {
@@ -54,6 +55,7 @@ export default function App() {
   // UI state
   const [activeTab, setActiveTab] = useState<ActiveTab>('jadwal');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Filter state
@@ -332,10 +334,116 @@ export default function App() {
     );
   };
 
+  // Excel Import Handlers
+  const handleImportSchedulesFromExcel = (
+    imported: ScheduleItem[],
+    mode: 'replace' | 'append',
+    syncTeams: boolean,
+    syncVillages: boolean,
+    newTeams: Team[],
+    newVillages: string[]
+  ) => {
+    let updatedTeams = [...teams];
+    if (syncTeams && newTeams.length > 0) {
+      newTeams.forEach((nt) => {
+        if (!updatedTeams.some((t) => t.kode === nt.kode)) {
+          updatedTeams.push(nt);
+        }
+      });
+      setTeams(updatedTeams);
+    }
+
+    let updatedVillages = [...villages];
+    if (syncVillages && newVillages.length > 0) {
+      newVillages.forEach((nv) => {
+        if (!updatedVillages.includes(nv)) {
+          updatedVillages.push(nv);
+        }
+      });
+      setVillages(updatedVillages);
+    }
+
+    let finalSchedules: ScheduleItem[] = [];
+    if (mode === 'replace') {
+      finalSchedules = imported;
+      if (imported.length > 0) {
+        const sortedDates = [...imported].map((s) => s.tanggalRaw).sort();
+        setTglMulai(sortedDates[0]);
+        setTglAkhir(sortedDates[sortedDates.length - 1]);
+      }
+    } else {
+      finalSchedules = [...schedules, ...imported].sort((a, b) => a.tanggalRaw.localeCompare(b.tanggalRaw));
+    }
+
+    setSchedules(finalSchedules);
+    setActiveTab('jadwal');
+    addToast(
+      'success',
+      'Impor Excel Berhasil!',
+      `${imported.length} jadwal tugas berhasil dimuat (${mode === 'replace' ? 'Menggantikan jadwal aktif' : 'Ditambahkan'}).`
+    );
+  };
+
+  const handleImportTeamsFromExcel = (newTeams: Team[], mode: 'replace' | 'append') => {
+    let updatedTeams: Team[] = [];
+    if (mode === 'replace') {
+      updatedTeams = newTeams;
+    } else {
+      updatedTeams = [...teams];
+      newTeams.forEach((nt) => {
+        const existingIdx = updatedTeams.findIndex((t) => t.kode === nt.kode);
+        if (existingIdx >= 0) {
+          updatedTeams[existingIdx] = nt;
+        } else {
+          updatedTeams.push(nt);
+        }
+      });
+    }
+
+    setTeams(updatedTeams);
+    // synchronize officer names in current schedules
+    const updatedSchedules = schedules.map((sch) => {
+      const match = updatedTeams.find((t) => t.kode === sch.timKode);
+      if (match) {
+        return {
+          ...sch,
+          petugas1: match.p1,
+          petugas2: match.p2
+        };
+      }
+      return sch;
+    });
+    setSchedules(updatedSchedules);
+    addToast('success', 'Impor Master Tim Berhasil', `${newTeams.length} Tim diproses.`);
+  };
+
+  const handleImportVillagesFromExcel = (newVillages: string[], mode: 'replace' | 'append') => {
+    let updated: string[] = [];
+    if (mode === 'replace') {
+      updated = newVillages;
+    } else {
+      updated = Array.from(new Set([...villages, ...newVillages]));
+    }
+    setVillages(updated);
+    addToast('success', 'Impor Master Desa Berhasil', `${newVillages.length} Desa diproses.`);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 font-sans flex flex-col justify-between">
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      {/* Excel Import Modal */}
+      <ExcelImportModal
+        isOpen={isExcelModalOpen}
+        onClose={() => setIsExcelModalOpen(false)}
+        existingTeams={teams}
+        existingVillages={villages}
+        existingSchedules={schedules}
+        onImportSchedules={handleImportSchedulesFromExcel}
+        onImportTeams={handleImportTeamsFromExcel}
+        onImportVillages={handleImportVillagesFromExcel}
+      />
 
       <div>
         {/* Navigation Header */}
@@ -347,6 +455,7 @@ export default function App() {
           totalVillages={villages.length}
           tglMulaiFormatted={formatDateIndo(tglMulai)}
           tglAkhirFormatted={formatDateIndo(tglAkhir)}
+          onOpenExcelImportModal={() => setIsExcelModalOpen(true)}
           onQuickExportExcel={handleQuickExportExcel}
           onQuickExportPDF={handleQuickExportPDF}
           onOpenBackupModal={() => setActiveTab('backup')}
@@ -399,6 +508,7 @@ export default function App() {
               onSwapSchedules={handleSwapSchedules}
               onRegenerateAll={handleRegenerateAll}
               onResetAllDefault={handleResetAllDefault}
+              onOpenImportExcel={() => setIsExcelModalOpen(true)}
               tglMulai={tglMulai}
               tglAkhir={tglAkhir}
               excludeSunday={excludeSunday}
@@ -412,6 +522,7 @@ export default function App() {
               schedules={schedules}
               onSaveTeams={handleSaveTeams}
               onResetTeamsDefault={handleResetTeamsDefault}
+              onOpenImportExcel={() => setIsExcelModalOpen(true)}
             />
           )}
 
@@ -422,6 +533,7 @@ export default function App() {
               schedules={schedules}
               onSaveVillages={handleSaveVillages}
               onResetVillagesDefault={handleResetVillagesDefault}
+              onOpenImportExcel={() => setIsExcelModalOpen(true)}
             />
           )}
 
@@ -472,6 +584,7 @@ export default function App() {
               }}
               onRestoreState={handleRestoreState}
               onResetAllDefault={handleResetAllDefault}
+              onOpenExcelImportModal={() => setIsExcelModalOpen(true)}
             />
           )}
         </main>

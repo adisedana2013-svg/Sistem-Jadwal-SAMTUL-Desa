@@ -9,6 +9,7 @@ import {
   Database,
   FileSpreadsheet,
   FileDown,
+  Upload,
   RefreshCw,
   ShieldAlert,
   ShieldCheck
@@ -23,6 +24,7 @@ interface HeaderProps {
   totalVillages: number;
   tglMulaiFormatted: string;
   tglAkhirFormatted: string;
+  onOpenExcelImportModal: () => void;
   onQuickExportExcel: () => void;
   onQuickExportPDF: () => void;
   onOpenBackupModal: () => void;
@@ -37,6 +39,7 @@ export const Header: React.FC<HeaderProps> = ({
   totalVillages,
   tglMulaiFormatted,
   tglAkhirFormatted,
+  onOpenExcelImportModal,
   onQuickExportExcel,
   onQuickExportPDF,
   onOpenBackupModal,
@@ -82,13 +85,13 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Quick Actions */}
         <div className="flex items-center flex-wrap gap-2">
           <button
-            id="btn-quick-report"
-            onClick={onOpenPrintReport}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all active:scale-95"
-            title="Buka Cetak Laporan Resmi"
+            id="btn-import-excel"
+            onClick={onOpenExcelImportModal}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all active:scale-95"
+            title="Impor data dari berkas Excel (.xlsx / .csv)"
           >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Cetak Laporan</span>
+            <Upload className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Impor Excel</span>
           </button>
 
           <button
@@ -98,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
             title="Ekspor Jadwal ke Excel (.xlsx)"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Excel</span>
+            <span>Ekspor Excel</span>
           </button>
 
           <button
@@ -109,6 +112,16 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <FileDown className="w-3.5 h-3.5" />
             <span>PDF</span>
+          </button>
+
+          <button
+            id="btn-quick-report"
+            onClick={onOpenPrintReport}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all active:scale-95"
+            title="Buka Cetak Laporan Resmi"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>Cetak Laporan</span>
           </button>
 
           <button

@@ -10,7 +10,8 @@ import {
   X, 
   RotateCcw, 
   Building2,
-  CheckCircle2
+  CheckCircle2,
+  Upload
 } from 'lucide-react';
 import { DEFAULT_DESA } from '../constants/initialData';
 
@@ -19,13 +20,15 @@ interface VillageManagerProps {
   schedules: ScheduleItem[];
   onSaveVillages: (newVillages: string[]) => void;
   onResetVillagesDefault: () => void;
+  onOpenImportExcel?: () => void;
 }
 
 export const VillageManager: React.FC<VillageManagerProps> = ({
   villages,
   schedules,
   onSaveVillages,
-  onResetVillagesDefault
+  onResetVillagesDefault,
+  onOpenImportExcel
 }) => {
   const [search, setSearch] = useState('');
   const [newVillageName, setNewVillageName] = useState('');
@@ -116,6 +119,15 @@ export const VillageManager: React.FC<VillageManagerProps> = ({
         </div>
 
         <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto">
+          {onOpenImportExcel && (
+            <button
+              onClick={onOpenImportExcel}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all active:scale-95"
+            >
+              <Upload className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Impor Excel Desa</span>
+            </button>
+          )}
           <button
             onClick={handleSortAZ}
             className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"

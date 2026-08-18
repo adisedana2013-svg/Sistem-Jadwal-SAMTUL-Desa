@@ -12,7 +12,8 @@ import {
   RotateCcw, 
   Phone,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Upload
 } from 'lucide-react';
 
 interface TeamManagerProps {
@@ -20,13 +21,15 @@ interface TeamManagerProps {
   schedules: ScheduleItem[];
   onSaveTeams: (newTeams: Team[]) => void;
   onResetTeamsDefault: () => void;
+  onOpenImportExcel?: () => void;
 }
 
 export const TeamManager: React.FC<TeamManagerProps> = ({
   teams,
   schedules,
   onSaveTeams,
-  onResetTeamsDefault
+  onResetTeamsDefault,
+  onOpenImportExcel
 }) => {
   const [localTeams, setLocalTeams] = useState<Team[]>(JSON.parse(JSON.stringify(teams)));
   const [editingKode, setEditingKode] = useState<string | null>(null);
@@ -194,7 +197,17 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
+          {onOpenImportExcel && (
+            <button
+              onClick={onOpenImportExcel}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all active:scale-95"
+            >
+              <Upload className="w-4 h-4 text-cyan-300" />
+              <span>Impor Excel Tim</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               setNewTeamKode(getNextAvailableCode());

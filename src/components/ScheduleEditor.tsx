@@ -16,7 +16,8 @@ import {
   Check, 
   AlertCircle,
   HelpCircle,
-  Wand2
+  Wand2,
+  Upload
 } from 'lucide-react';
 import { HARI_INDONESIA } from '../constants/initialData';
 import { formatDateDDMMYYYY, formatDateYYYYMMDD, parseDate } from '../utils/scheduleGenerator';
@@ -31,6 +32,7 @@ interface ScheduleEditorProps {
   onSwapSchedules: (id1: string | number, id2: string | number) => void;
   onRegenerateAll: (tglMulai: string, tglAkhir: string, excludeSunday: boolean) => void;
   onResetAllDefault: () => void;
+  onOpenImportExcel?: () => void;
   tglMulai: string;
   tglAkhir: string;
   excludeSunday: boolean;
@@ -46,6 +48,7 @@ export const ScheduleEditor: React.FC<ScheduleEditorProps> = ({
   onSwapSchedules,
   onRegenerateAll,
   onResetAllDefault,
+  onOpenImportExcel,
   tglMulai,
   tglAkhir,
   excludeSunday
@@ -218,6 +221,17 @@ export const ScheduleEditor: React.FC<ScheduleEditorProps> = ({
           </div>
 
           <div className="flex items-center flex-wrap gap-2 w-full lg:w-auto">
+            {onOpenImportExcel && (
+              <button
+                onClick={onOpenImportExcel}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all active:scale-95"
+                title="Impor jadwal langsung dari berkas Excel"
+              >
+                <Upload className="w-4 h-4 text-cyan-300" />
+                <span>Impor Excel</span>
+              </button>
+            )}
+
             <button
               onClick={() => setIsAddModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all active:scale-95"

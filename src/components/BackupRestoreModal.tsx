@@ -27,6 +27,7 @@ import {
 } from '../utils/storage';
 import { downloadJSONFile } from '../utils/exportUtils';
 import { formatDateIndo } from '../utils/scheduleGenerator';
+import { FileSpreadsheet } from 'lucide-react';
 
 interface BackupRestoreModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ interface BackupRestoreModalProps {
   };
   onRestoreState: (data: BackupData) => void;
   onResetAllDefault: () => void;
+  onOpenExcelImportModal?: () => void;
 }
 
 export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
@@ -49,7 +51,8 @@ export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
   onClose,
   currentState,
   onRestoreState,
-  onResetAllDefault
+  onResetAllDefault,
+  onOpenExcelImportModal
 }) => {
   const [activeTab, setActiveTab] = useState<'backup' | 'restore' | 'snapshots'>('backup');
   const [snapshots, setSnapshots] = useState<LocalSnapshot[]>(loadSnapshots());
@@ -258,6 +261,31 @@ export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
       {/* TAB 2: RESTORE JSON */}
       {activeTab === 'restore' && (
         <div className="space-y-4">
+          {/* Excel Import Callout */}
+          {onOpenExcelImportModal && (
+            <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-600 text-white shrink-0 shadow-xs">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-emerald-950">Ingin Mengimpor Data dari Excel (.xlsx / .csv)?</h4>
+                  <p className="text-slate-600 text-[11px] mt-0.5">
+                    Gunakan modul Impor Excel cerdas untuk memuat jadwal, daftar tim, atau master desa dari spreadsheet.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenExcelImportModal}
+                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 shadow-xs transition-all active:scale-95 flex items-center gap-1.5 justify-center"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Buka Impor Excel</span>
+              </button>
+            </div>
+          )}
+
           {/* Dropzone */}
           <div
             onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
