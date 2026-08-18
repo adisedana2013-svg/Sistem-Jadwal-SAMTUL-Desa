@@ -45,31 +45,48 @@ export function parseExcelDate(val: any): {
   let month: number | null = null; // 0-indexed (0 = Jan, 7 = Aug)
   let day: number | null = null;
 
-  if (val instanceof Date && !isNaN(val.getTime())) {
-    // SheetJS XLSX with cellDates: true creates dates in UTC from Excel serials (e.g. 2026-08-18T00:00:00.000Z).
-    // Using getUTCFullYear/getUTCMonth/getUTCDate extracts the exact intended calendar date without timezone shift!
-    year = val.getUTCFullYear();
-    month = val.getUTCMonth();
-    day = val.getUTCDate();
-  } else if (typeof val === 'number') {
-    // Excel date serial number (e.g. 46252)
-    try {
-      const parsedSSF = XLSX.SSF.parse_date_code(val);
-      if (parsedSSF && parsedSSF.y && parsedSSF.m && parsedSSF.d) {
-        year = parsedSSF.y;
-        month = parsedSSF.m - 1;
-        day = parsedSSF.d;
-      }
-    } catch {
-      // Fallback calculation for Excel serial number
-      const dateParsed = new Date(Math.round((val - 25569) * 86400 * 1000));
-      if (!isNaN(dateParsed.getTime())) {
-        year = dateParsed.getUTCFullYear();
-        month = dateParsed.getUTCMonth();
-        day = dateParsed.getUTCDate();
+  // 1. Numeric Excel Date Serial Code (e.g. 46254 for 20/08/2026)
+  if (typeof val === 'number' && !isNaN(val)) {
+    if (val > 0) {
+      try {
+        const parsedSSF = XLSX.SSF.parse_date_code(val);
+        if (parsedSSF && parsedSSF.y && parsedSSF.m && parsedSSF.d) {
+          year = parsedSSF.y;
+          month = parsedSSF.m - 1;
+          day = parsedSSF.d;
+        }
+      } catch {
+        // Fallback calculation for Excel serial number
+        const dateParsed = new Date(Math.round((val - 25569) * 86400 * 1000));
+        if (!isNaN(dateParsed.getTime())) {
+          year = dateParsed.getFullYear();
+          month = dateParsed.getMonth();
+          day = dateParsed.getDate();
+        }
       }
     }
-  } else if (typeof val === 'string') {
+  }
+  // 2. Date Object instance
+  else if (val instanceof Date && !isNaN(val.getTime())) {
+    // Check if created as local midnight or UTC midnight
+    if (val.getHours() === 0) {
+      year = val.getFullYear();
+      month = val.getMonth();
+      day = val.getDate();
+    } else if (val.getUTCHours() === 0) {
+      year = val.getUTCFullYear();
+      month = val.getUTCMonth();
+      day = val.getUTCDate();
+    } else {
+      // In timezone UTC+7/+8, local midnight corresponds to UTC 16:00/17:00 of previous day
+      // In local time, getFullYear/getMonth/getDate is the true intended calendar date
+      year = val.getFullYear();
+      month = val.getMonth();
+      day = val.getDate();
+    }
+  }
+  // 3. String values
+  else if (typeof val === 'string') {
     const cleanStr = val.trim();
 
     // Check DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
@@ -86,7 +103,7 @@ export function parseExcelDate(val: any): {
         month = parseInt(yyyymmdd[2], 10) - 1;
         day = parseInt(yyyymmdd[3], 10);
       } else {
-        // Try text format like '18 Agustus 2026' or '18-Agustus-2026'
+        // Try text format like '20 Agustus 2026' or '20-Agustus-2026'
         const parts = cleanStr.split(/[\s,\-_]+/);
         if (parts.length >= 3) {
           const dPart = parseInt(parts[0], 10);
@@ -107,9 +124,9 @@ export function parseExcelDate(val: any): {
     if (year === null || month === null || day === null) {
       const fallback = new Date(cleanStr);
       if (!isNaN(fallback.getTime())) {
-        year = fallback.getUTCFullYear();
-        month = fallback.getUTCMonth();
-        day = fallback.getUTCDate();
+        year = fallback.getFullYear();
+        month = fallback.getMonth();
+        day = fallback.getDate();
       }
     }
   }
@@ -148,7 +165,7 @@ export async function readExcelWorkbook(file: File): Promise<XLSX.WorkBook> {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, {
           type: 'array',
-          cellDates: true,
+          cellDates: false,
           cellNF: false,
           cellText: false
         });
