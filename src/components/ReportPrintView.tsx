@@ -482,14 +482,6 @@ export const ReportPrintView: React.FC<ReportPrintViewProps> = ({
           </table>
         )}
 
-        {/* Additional Notes */}
-        {localConfig.catatanTambahan && (
-          <div className="mb-6 text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
-            <span className="font-bold block mb-1">Catatan & Instruksi Pelaksanaan:</span>
-            <div className="whitespace-pre-line">{localConfig.catatanTambahan}</div>
-          </div>
-        )}
-
         {/* Signature Box */}
         {localConfig.tampilkanTtd && (
           <div className="flex justify-end mt-8 break-inside-avoid">

@@ -89,7 +89,7 @@ export const DEFAULT_REPORT_CONFIG: ReportConfig = {
   namaPenandatangan: 'I WAYAN SUARTA, S.Sos., M.AP.',
   jabatanPenandatangan: 'Koordinator Lapangan SAMTUL Desa',
   nipPenandatangan: '19820514 200801 1 009',
-  catatanTambahan: '1. Petugas wajib hadir tepat waktu dan mengisi presensi digital/manual.\n2. Wajib berkoordinasi dengan Linmas dan Prajuru Desa setempat.\n3. Melaporkan situasi keamanan secara berkala ke pos komando.',
+  catatanTambahan: '',
   tampilkanKop: true,
   tampilkanTtd: true
 };
